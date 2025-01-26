@@ -1,0 +1,60 @@
+{
+  "compilerOptions": {
+    "target": "ESNext",
+    "module": "ESNext",
+    "lib": ["es5", "es6", "dom", "ESNext"],  
+    "moduleResolution": "node",
+    "outDir": "dist",
+    "rootDir": "src",
+    "strict": false,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": false,
+    "allowImportingTsExtensions": true,
+    "declaration": true,
+    "emitDeclarationOnly": true,
+    "resolveJsonModule": true,
+    "noImplicitAny": false,
+    "allowJs": true,
+    "checkJs": false,
+    "noEmitOnError": false,
+    "moduleDetection": "force",
+    "allowArbitraryExtensions": true,
+    // "target": "es2020",
+    // "module": "commonjs",
+    "typeRoots": ["./node_modules/@types", "./custom-types"],
+    // "esModuleInterop": true,
+    // "skipLibCheck": true,
+    // "forceConsistentCasingInFileNames": true,
+    // "moduleResolution": "node",
+    // "resolveJsonModule": true,
+    // "declaration": true,
+    // "outDir": "./dist",
+    // "noEmitOnError": false,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "baseUrl": ".",
+    "paths": {
+      "*": ["node_modules/*", "src/types/*"]
+    }
+  },
+  "include": [ "src/**/*.ts",
+  "src/models/farcaster_account.ts", "src/scrapeTwitter/pipelineWorker.js", "src/scrapeTwitter/twitterPipeline.js", "src/scrapeTwitter/TweetFilter.js"],
+  "overrides": [
+    {
+        "files": [
+            "*.js"
+        ],
+        "extends": [
+            "eslint:recommended"
+        ],
+        "parserOptions": {
+            "project": null
+        }
+    }
+],
+"ts-node": {
+  "esm": true,
+}, 
+  "exclude": ["node_modules"]
+}

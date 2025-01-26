@@ -1,0 +1,26 @@
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/sdks
+!.yarn/versions
+
+# Swap the comments on the following lines if you don't wish to use zero-installs
+# Documentation here: https://yarnpkg.com/features/zero-installs
+!.yarn/cache
+#.pnp.*
+.yarn
+.editorconfig
+.env
+node_modules
+.gitattributes
+dist
+
+# Ignore the cache .js file
+dbHandler.js
+server.js
+migration
+cookies
+characters
+pipeline
+/Users/yashwanth/other-projects/Backend/nodejs/social-agents-backend/pipeline
