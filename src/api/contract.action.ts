@@ -1,9 +1,13 @@
-import { PublicKey, Transaction, SystemProgram } from "@solana/web3.js";
+import { PublicKey, Transaction, SystemProgram, Connection, sendAndConfirmTransaction } from "@solana/web3.js";
 import * as anchor from "@coral-xyz/anchor";
 import * as crypto from "crypto";
 import * as solanaNetwork from "../common/solanaNetwork";
 import BN from "bn.js";
 import IDL from "../common/idl.json";
+import {
+    updateMetadataAccountV2,
+    DataV2
+  } from '@metaplex-foundation/mpl-token-metadata';
 import {
     ASSOCIATED_TOKEN_PROGRAM_ID,
     TOKEN_PROGRAM_ID,
@@ -16,6 +20,7 @@ import { TurnkeyActivityError } from "@turnkey/http";
 import { TokenService } from "../services/tokenServices";
 import { getOwnerWalletAddress, solToLamports } from "../scrapeTwitter/utils";
 import { FarcasterAccountService } from "../services/farcasterAccountService";
+import { createCreateMetadataAccountV3Instruction } from "@metaplex-foundation/mpl-token-metadata";
 
 const { Program } = anchor;
 
@@ -91,6 +96,7 @@ export async function createWallet() {
 const program = new Program(IDL as any, turnkeySigner as any) as any;
 const connection = solanaNetwork.connect();
 // const solAddress = "Ad75LBmPLWphWV34fQumh64Bxq9wCaYx7c2FKigBiNwW";
+
 export async function createToken({ solAddress }: { solAddress: string }) {
     const fromKey = new PublicKey(solAddress);
     const seed = new BN(Date.now().toString());
@@ -230,6 +236,77 @@ export async function sellToken({ agentFid, ownerFid, amount }) {
     await turnkeySigner.addSignature(transferTx, ownerWalletAddress);
     const txHash = await solanaNetwork.broadcast(connection, transferTx);
     console.log("sellToken--txhash---", txHash);
+}
+
+export async function updateTokenMetadata() {
+
+    const mintAuthority = '2Gp2Y3LdBHVWGGLkfnRr8Xb7Get7AiPxHeEj68MV6agr'
+    const user = '5ond8osS9gjV1hmt1kaj4UNCzc5TGzkwiR37ifG1rrgn'
+    const TOKEN_METADATA_PROGRAM_ID = new PublicKey(
+        "metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s"
+    );
+    
+    // Substitute in your token mint account
+    const tokenMintAccount = new PublicKey("3croVPLo7CoQCMvo8GjtGfHGTUggCiMth5Lh6ki7W4oG");
+    
+    // Define the new metadata for the token
+    const newMetadataData = {
+        name: "ATest Tokens", // New name
+        symbol: "AAAAGT",          // New symbol
+        uri: "https://raw.githubusercontent.com/solana-developers/professional-education/main/labs/sample-token-metadata.json",
+        sellerFeeBasisPoints: 500,  // Seller fee in basis points (5%)
+        creators: null,
+        collection: null,
+        uses: null,
+    };
+    
+    // Find the Metadata PDA
+    const metadataPDAAndBump = PublicKey.findProgramAddressSync(
+        [
+        Buffer.from("metadata"),
+        TOKEN_METADATA_PROGRAM_ID.toBuffer(),
+        tokenMintAccount.toBuffer(),
+        ],
+        TOKEN_METADATA_PROGRAM_ID
+    );
+    
+    const metadataPDA = metadataPDAAndBump[0];
+    
+    console.log('metadataPDA---->', metadataPDA)
+
+    const transaction = new Transaction();
+    const mintPublicKey = new PublicKey(mintAuthority)
+    const publicKey  = new PublicKey(user)
+    // Create the Update Metadata Instruction
+    const updateMetadataAccountInstruction =
+        createCreateMetadataAccountV3Instruction(
+        {
+            metadata: metadataPDA,
+            mint: tokenMintAccount,
+            mintAuthority: mintPublicKey,
+            payer: publicKey,
+            updateAuthority: mintPublicKey,
+        },
+        {
+            createMetadataAccountArgsV3: {
+                collectionDetails: null,
+                data: newMetadataData,
+                isMutable: true,
+            },
+        }
+        );
+    
+        transaction.add(updateMetadataAccountInstruction);
+
+        transaction.feePayer = new PublicKey(user);
+        transaction.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
+
+        // Sign and send transaction
+        await turnkeySigner.addSignature(transaction, user);
+        const txHash = await solanaNetwork.broadcast(connection, transaction);
+
+        console.log("Transaction Hash:", txHash);
+        return txHash;
 }
 
 export async function transferSol({senderWalletAddress, recipientWalletAddress, amount}) {
