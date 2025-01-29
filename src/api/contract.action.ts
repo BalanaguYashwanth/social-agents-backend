@@ -5,10 +5,6 @@ import * as solanaNetwork from "../common/solanaNetwork";
 import BN from "bn.js";
 import IDL from "../common/idl.json";
 import {
-    updateMetadataAccountV2,
-    DataV2
-  } from '@metaplex-foundation/mpl-token-metadata';
-import {
     ASSOCIATED_TOKEN_PROGRAM_ID,
     TOKEN_PROGRAM_ID,
     getAssociatedTokenAddressSync,
@@ -236,6 +232,52 @@ export async function sellToken({ agentFid, ownerFid, amount }) {
     await turnkeySigner.addSignature(transferTx, ownerWalletAddress);
     const txHash = await solanaNetwork.broadcast(connection, transferTx);
     console.log("sellToken--txhash---", txHash);
+}
+
+export async function burnToken({ agentFid, ownerFid, amount }){
+    const farcasterAccountService = new FarcasterAccountService();
+    const farcasterAccountData = await farcasterAccountService.findFarcasterAccountByFid(agentFid);
+    const {ownerWalletAddress} = await getOwnerWalletAddress({fid: ownerFid});
+    const ownerPublicKey = new PublicKey(ownerWalletAddress);
+    if (!farcasterAccountData?.pk) {
+        throw new Error("Account not found");
+    }
+    const tokenService = new TokenService();
+    const agentToken = await tokenService.getTokenByFarcasterAccountId(
+        farcasterAccountData?.pk as any
+    );
+    const { mint, listing, mint_vault, sol_vault } = agentToken;
+
+    const userAta = getAssociatedTokenAddressSync(
+        new PublicKey(mint),
+        ownerPublicKey,
+        false,
+        TOKEN_PROGRAM_ID
+    );
+
+    const transferTx = new Transaction().add(
+        await program.methods
+            .burn(new BN(solToLamports(Number(amount))))
+            .accounts({
+                user: ownerPublicKey,
+                mint: new PublicKey(mint),
+                listing: new PublicKey(listing),
+                mintVault: new PublicKey(mint_vault),
+                solVault: new PublicKey(sol_vault),
+                userAta,
+                tokenProgram: TOKEN_PROGRAM_ID,
+                associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
+                systemProgram: SystemProgram.programId,
+            })
+            .instruction()
+    );
+
+    transferTx.recentBlockhash = await solanaNetwork.recentBlockhash();
+    transferTx.feePayer = ownerPublicKey;
+
+    await turnkeySigner.addSignature(transferTx, ownerWalletAddress);
+    const txHash = await solanaNetwork.broadcast(connection, transferTx);
+    console.log("burnToken--txhash---", txHash);
 }
 
 export async function updateTokenMetadata() {

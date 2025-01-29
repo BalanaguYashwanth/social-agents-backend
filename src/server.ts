@@ -15,6 +15,7 @@ import { Router, Request, Response } from "express";
 import { OWNER_TYPE } from "./config/constantTypes";
 import { TokenService } from "./services/tokenServices";
 import {
+    burnToken,
     buyToken,
     createToken,
     createWallet,
@@ -84,38 +85,38 @@ const startServer = async () => {
             const twitterUsername = unOrganizedTwitterUsername?.toLowerCase();
             const {ownerWalletAddress, userPk} = await getOwnerWalletAddress({fid: ownerFid});
             const lowerUsername = username?.toLowerCase();
-            const signer_uuid = '1234567890';
-            const fid = 194
-            // const fid = await getRandomFid();
-            // const isNameAvailable = await checkAvailableFid(lowerUsername);
-            // if (!isNameAvailable) {
-            //     return res.status(400).json({ error: "Name not available" });
-            // }
-            // if (!lowerUsername || !name || !language || !twitterUsername) {
-            //     return res
-            //         .status(400)
-            //         .json({ error: "All fields are required" });
-            // }
-            // const { signer_uuid, agentId } = await createAndSaveFarcasterAccountAndWallet({
-            //         FID: fid,
-            //         username: lowerUsername,
-            //         name,
-            //         user_fk: BigInt(userPk)
-            //     }) as any;
-            // const wallet = await createAndSaveWallet({ownerFk: BigInt(agentId), ownerType: OWNER_TYPE.FARCASER_ACCOUNT});
-            // await loadBalanceIntoWallet({recipientWalletAddress: wallet.walletAddress, senderWalletAddress: ownerWalletAddress, amount: 0.1});
-            // const { txHash, mint, listing, mintVault, solVault, seed } =
-            //     await createToken({ solAddress: wallet.walletAddress });
-            // await saveToken({
-            //     farcasterAccountFk: BigInt(agentId),
-            //     txHash,
-            //     mint,
-            //     listing,
-            //     mintVault,
-            //     solVault,
-            //     seed,
-            //     walletAddress: wallet.walletAddress,
-            // });
+            // const signer_uuid = '1234567890';
+            // const fid = 194
+            const fid = await getRandomFid();
+            const isNameAvailable = await checkAvailableFid(lowerUsername);
+            if (!isNameAvailable) {
+                return res.status(400).json({ error: "Name not available" });
+            }
+            if (!lowerUsername || !name || !language || !twitterUsername) {
+                return res
+                    .status(400)
+                    .json({ error: "All fields are required" });
+            }
+            const { signer_uuid, agentId } = await createAndSaveFarcasterAccountAndWallet({
+                    FID: fid,
+                    username: lowerUsername,
+                    name,
+                    user_fk: BigInt(userPk)
+                }) as any;
+            const wallet = await createAndSaveWallet({ownerFk: BigInt(agentId), ownerType: OWNER_TYPE.FARCASER_ACCOUNT});
+            await loadBalanceIntoWallet({recipientWalletAddress: wallet.walletAddress, senderWalletAddress: ownerWalletAddress, amount: 0.1});
+            const { txHash, mint, listing, mintVault, solVault, seed } =
+                await createToken({ solAddress: wallet.walletAddress });
+            await saveToken({
+                farcasterAccountFk: BigInt(agentId),
+                txHash,
+                mint,
+                listing,
+                mintVault,
+                solVault,
+                seed,
+                walletAddress: wallet.walletAddress,
+            });
             runPipelineInWorker({
                 username: lowerUsername,
                 name,
@@ -157,8 +158,17 @@ const startServer = async () => {
         return res.status(200).json({ message: "Token sold successfully" });
     });
 
+    app.post("/burn-token", async (req, res) => {
+        const { agentFid, ownerFid, amount } = req.body;
+        await burnToken({ agentFid, ownerFid, amount });
+        return res.status(200).json({ message: "Token burn successfully" });
+    });
+
     app.post("/buy-token", async (req, res) => {
         const { agentFid, ownerFid, amount } = req.body;
+        if(!(ownerFid && agentFid && amount)){
+            return res.status(400).json({ message: "Please send proper inputs" });
+        }
         await buyToken({ agentFid, ownerFid, amount });
         return res.status(200).json({ message: "Token bought successfully" });
     });

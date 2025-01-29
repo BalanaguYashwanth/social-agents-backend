@@ -15,7 +15,11 @@ export class UserService {
     }
 
     async getUserByFid(fid: number) {
-        return await this.userRepository.findOne({ where: { fid } });
+        if(fid){
+            return await this.userRepository.findOne({ where: { fid } });
+        } else {
+            return {}
+        }
     }
 
     async getAllUsers() {
