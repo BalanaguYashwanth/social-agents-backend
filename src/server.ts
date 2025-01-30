@@ -7,10 +7,14 @@ import bodyParser from "body-parser";
 import cors from "cors";
 import { AppDataSource } from "./config/db"; // TypeORM DataSource
 import {
+    buyAndBurnToken,
+    fetchRedisCacheData,
     getOwnerWalletAddress,
     hasUserExists,
     runPipelineInWorker,
+    solToLamports,
 } from "./scrapeTwitter/utils";
+import { LAMPORTS_PER_SOL } from "@solana/web3.js";
 import { Router, Request, Response } from "express";
 import { OWNER_TYPE } from "./config/constantTypes";
 import { TokenService } from "./services/tokenServices";
@@ -29,10 +33,23 @@ import {
     saveToken,
     saveUser,
     saveWallet,
+    updateWalletBalanace,
 } from "./dbHandler";
 import { checkAvailableFid, getRandomFid } from "./api/farcaster.action";
 import { FarcasterAccountService } from "./services/farcasterAccountService";
 import ENV_CONFIG from "./config/env";
+import { createClient } from 'redis';
+
+const redisClient = createClient({
+    username: ENV_CONFIG.REDIS_USERNAME,
+    password: ENV_CONFIG.REDIS_PASSWORD,
+    socket: {
+        host: ENV_CONFIG.REDIS_HOST,
+        port: ENV_CONFIG.REDIS_PORT
+    }
+});
+redisClient.on('error', err => console.log('Redis Client Error', err));
+await redisClient.connect();
 
 const startServer = async () => {
     try {
@@ -135,16 +152,33 @@ const startServer = async () => {
         }
     });
 
-    app.post("/create-user", async (req, res) => {
+    const userCached = async (req, res, next) => {
+        const {fid, username} = req.body;
+        const data = await redisClient.get(String(fid));
+        if(data){
+            const parsedData = JSON.parse(data)
+            return res.status(200).json({ status: "already exists", walletAddress: parsedData?.walletAddress})
+        }
+        next()
+    }
+
+    app.post("/create-user", userCached, async (req, res) => {
         try {
             const { fid, username } = req.body;
-            if (await hasUserExists(fid)) {
-                return res.status(200).json({ status: "already exists" });
+            const hasUser = await hasUserExists(fid)
+            if (hasUser) {
+                const user = await getUserByFid(fid);
+                if (!user?.pk) {
+                    return res.status(404).json({ error: "User not found" });
+                }
+                const wallet = await getWalletByOwnerId(user.pk);
+                await redisClient.set(String(fid), JSON.stringify({walletAddress: wallet?.wallet_address}))
+                return res.status(200).json({ status: "already exists", walletAddress: wallet?.wallet_address});
             }
             const { walletName, walletId, walletAddress } = await createWallet();
             const user = await saveUser({ fid, username });
             await saveWallet({ ownerFk: user.pk, ownerType: OWNER_TYPE.USER, walletName, walletId, walletAddress });
-            return res.status(200).json({ status: "created" });
+            return res.status(200).json({ status: "created", walletAddress });
         } catch (error: any) {
             return res
                 .status(400)
@@ -188,6 +222,57 @@ const startServer = async () => {
         return res.status(200).json({ token });
     });
 
+    app.post('/update-wallet-balance', async(req, res)=>{
+        const {walletAddress, amount} = req.body
+        await updateWalletBalanace({walletAddress, amount})
+        return res.status(200).json({ status:'updated' });
+    })
+
+    app.post('/cache/update-tx', async (req, res) => {
+        const { walletAddress, amount } = req.body;
+        const existingData = await redisClient.get(walletAddress);
+        let parsedData
+        if (existingData) {
+            parsedData = JSON.parse(existingData);
+            parsedData.amount = parseFloat(amount);
+            await redisClient.set(walletAddress, JSON.stringify(parsedData));
+        } else {
+            parsedData = { walletAddress, amount }
+            await redisClient.set(walletAddress, JSON.stringify(parsedData));
+        }
+        res.json({ status: "Wallet updated successfully", data: {...parsedData} });
+    });
+
+    app.post('/cache/decrease-balance', async (req, res) => {
+        const { walletAddress, agentFid, ownerFid} = req.body;
+        const existingData = await redisClient.get(walletAddress);
+        const DEFAULT_AMOUNT = 0.1
+        if(!existingData){
+            return res.status(400).json({status: "Add funds into wallet"})
+        }        
+        let parsedData = JSON.parse(existingData);
+        let amount = Number(parsedData.amount);
+        amount = amount - (solToLamports(DEFAULT_AMOUNT))
+        parsedData.amount = amount;
+        await redisClient.set(walletAddress, JSON.stringify(parsedData));
+        buyAndBurnToken({ agentFid, ownerFid, amount: DEFAULT_AMOUNT })
+        res.json({ status: "Wallet updated successfully", data: {...parsedData} });
+    });
+
+    app.get('/cache/wallet-balance/:id', async (req, res) => {
+        const walletAddress = req.params.id
+        const existingData = await redisClient.get(walletAddress);
+        let parsedData
+        if (existingData) {
+            parsedData = JSON.parse(existingData);
+        }else{
+            res.status(400).json({ status: 'Please add funds in wallet' });
+        }
+        const balance = (parsedData.amount / LAMPORTS_PER_SOL).toFixed(2)
+        res.json({ balance });
+    });
+    
+    
     app.post("/update-token-ata", async (req, res) => {
         const { wallet_address, user_ata } = req.body;
         const tokenService = new TokenService();

@@ -2,6 +2,8 @@ import { WalletService } from "./services/walletService";
 import { FarcasterAccountService } from "./services/farcasterAccountService";
 import { TokenService } from "./services/tokenServices";
 import { UserService } from "./services/userService";
+import { WalletTransaction } from "./models/wallet_transaction";
+import { WalletTransactionService } from "./services/walletTransaction.service";
 
 export const saveAgent = async ({
     registeredUser,
@@ -87,3 +89,8 @@ export const getWalletByOwnerId = async (ownerFk: bigint) => {
     const walletService = new WalletService();
     return await walletService.getWalletByOwnerId(ownerFk);
 };
+
+export const updateWalletBalanace = ({walletAddress, amount}) => {
+    const walletBalance = new WalletTransactionService();
+    walletBalance.updateWalletBalance({walletAddress, amount})
+}

@@ -17,8 +17,13 @@ const ENV_CONFIG = {
     TURNKEY_BASE_URL: process.env.TURNKEY_BASE_URL,
     TURNKEY_API_PUBLIC_KEY: process.env.TURNKEY_API_PUBLIC_KEY,
     TURNKEY_API_PRIVATE_KEY: process.env.TURNKEY_API_PRIVATE_KEY,
-
-    NOSQL_API: process.env.NOSQL_API
+    //TempDB
+    NOSQL_API: process.env.NOSQL_API,
+    //Redis
+    REDIS_USERNAME: process.env.REDIS_USERNAME,
+    REDIS_PASSWORD: process.env.REDIS_PASSWORD,
+    REDIS_HOST: process.env.REDIS_HOST,
+    REDIS_PORT: process.env.REDIS_PORT,
 }
 
 export default ENV_CONFIG;

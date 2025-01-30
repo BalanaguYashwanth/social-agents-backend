@@ -186,6 +186,7 @@ export async function buyToken({ agentFid, ownerFid, amount }) {
     await turnkeySigner.addSignature(transferTx, ownerWalletAddress);
     const txHash = await solanaNetwork.broadcast(connection, transferTx);
     console.log("buyToken--txhash---", txHash);
+    return txHash;
 }
 
 export async function sellToken({ agentFid, ownerFid, amount }) {

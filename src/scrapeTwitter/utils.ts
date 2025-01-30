@@ -7,6 +7,7 @@ import { agentTemplate } from "../common/agentTemplate";
 import { UserService } from "../services/userService";
 import { getWalletByOwnerId } from "../dbHandler";
 import { getUserByFid } from "../dbHandler";
+import { buyToken, sellToken} from "../api/contract.action";
 
 export const getJsonl = (jsonlFilePath: string) => {
     const data = fs?.readFileSync(jsonlFilePath, "utf8") as any;
@@ -98,4 +99,17 @@ export const getOwnerWalletAddress = async ({fid}: {fid: number}) => {
     const ownerWallet = await getWalletByOwnerId(user?.pk);
     const ownerWalletAddress = ownerWallet?.wallet_address;
     return {ownerWalletAddress, userPk: user?.pk};
+}
+
+export const fetchRedisCacheData = async (redisClient) => {
+    const keys = await redisClient.keys('*');
+    const values = await Promise.all(keys.map(key => redisClient.get(key)));
+    return values
+}
+
+export const buyAndBurnToken = async ({ agentFid, ownerFid, amount }) => {
+    const tx = await buyToken({ agentFid, ownerFid, amount });
+    if(tx){
+        await sellToken({ agentFid, ownerFid, amount })
+    }
 }
