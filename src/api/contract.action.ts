@@ -283,7 +283,7 @@ export async function burnToken({ agentFid, ownerFid, amount }){
 
 export async function updateTokenMetadata() {
 
-    const mintAuthority = '2Gp2Y3LdBHVWGGLkfnRr8Xb7Get7AiPxHeEj68MV6agr'
+    const mintAuthority = '3croVPLo7CoQCMvo8GjtGfHGTUggCiMth5Lh6ki7W4oG'
     const user = '5ond8osS9gjV1hmt1kaj4UNCzc5TGzkwiR37ifG1rrgn'
     const TOKEN_METADATA_PROGRAM_ID = new PublicKey(
         "metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s"
@@ -326,9 +326,9 @@ export async function updateTokenMetadata() {
         {
             metadata: metadataPDA,
             mint: tokenMintAccount,
-            mintAuthority: mintPublicKey,
+            mintAuthority: publicKey,
             payer: publicKey,
-            updateAuthority: mintPublicKey,
+            updateAuthority: publicKey,
         },
         {
             createMetadataAccountArgsV3: {

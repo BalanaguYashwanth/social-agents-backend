@@ -7,7 +7,7 @@ import { agentTemplate } from "../common/agentTemplate";
 import { UserService } from "../services/userService";
 import { getWalletByOwnerId } from "../dbHandler";
 import { getUserByFid } from "../dbHandler";
-import { buyToken, sellToken} from "../api/contract.action";
+import { burnToken, buyToken, sellToken} from "../api/contract.action";
 
 export const getJsonl = (jsonlFilePath: string) => {
     const data = fs?.readFileSync(jsonlFilePath, "utf8") as any;
@@ -110,6 +110,6 @@ export const fetchRedisCacheData = async (redisClient) => {
 export const buyAndBurnToken = async ({ agentFid, ownerFid, amount }) => {
     const tx = await buyToken({ agentFid, ownerFid, amount });
     if(tx){
-        await sellToken({ agentFid, ownerFid, amount })
+        await burnToken({ agentFid, ownerFid, amount })
     }
 }
