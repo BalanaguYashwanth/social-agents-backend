@@ -8,6 +8,7 @@ import { UserService } from "../services/userService";
 import { getWalletByOwnerId } from "../dbHandler";
 import { getUserByFid } from "../dbHandler";
 import { burnToken, buyToken, sellToken} from "../api/contract.action";
+import { OWNER_TYPE } from "../config/constantTypes";
 
 export const getJsonl = (jsonlFilePath: string) => {
     const data = fs?.readFileSync(jsonlFilePath, "utf8") as any;
@@ -96,7 +97,7 @@ export const solToLamports = (sol: number) => sol * 1_000_000_000;
 
 export const getOwnerWalletAddress = async ({fid}: {fid: number}) => {
     const user = await getUserByFid(fid);
-    const ownerWallet = await getWalletByOwnerId(user?.pk);
+    const ownerWallet = await getWalletByOwnerId({ownerFk: user?.pk, ownerType: OWNER_TYPE.USER});
     const ownerWalletAddress = ownerWallet?.wallet_address;
     return {ownerWalletAddress, userPk: user?.pk};
 }

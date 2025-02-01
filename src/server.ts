@@ -28,6 +28,7 @@ import {
 } from "./api/contract.action";
 import createAndSaveFarcasterAccountAndWallet from "./createFarcaster/createFarcasterAccount";
 import {
+    fetchAgentDetails,
     getUserByFid,
     getWalletByOwnerId,
     saveToken,
@@ -75,7 +76,7 @@ const startServer = async () => {
     }
 
 
-    const loadBalanceIntoWallet = async ({recipientWalletAddress, senderWalletAddress, amount}: {recipientWalletAddress: string, senderWalletAddress: string, amount: number}) => {
+    const loadBalanceIntoWallet = async ({senderWalletAddress, recipientWalletAddress, amount}: {recipientWalletAddress: string, senderWalletAddress: string, amount: number}) => {
         await transferSol({senderWalletAddress, recipientWalletAddress, amount});
     }
 
@@ -92,7 +93,7 @@ const startServer = async () => {
             return res.status(404).json({ error: "User not found" });
         }
 
-        const wallet = await getWalletByOwnerId(user.pk);
+        const wallet = await getWalletByOwnerId({ownerFk: user.pk, ownerType: OWNER_TYPE.USER});
         res.json({ walletAddress: wallet?.wallet_address });
     });
 
@@ -121,7 +122,7 @@ const startServer = async () => {
                     user_fk: BigInt(userPk)
                 }) as any;
             const wallet = await createAndSaveWallet({ownerFk: BigInt(agentId), ownerType: OWNER_TYPE.FARCASER_ACCOUNT});
-            await loadBalanceIntoWallet({recipientWalletAddress: wallet.walletAddress, senderWalletAddress: ownerWalletAddress, amount: 0.1});
+            await loadBalanceIntoWallet({senderWalletAddress: ownerWalletAddress, recipientWalletAddress: wallet.walletAddress, amount: 0.1});
             const { txHash, mint, listing, mintVault, solVault, seed } =
                 await createToken({ solAddress: wallet.walletAddress });
             await saveToken({
@@ -171,7 +172,7 @@ const startServer = async () => {
                 if (!user?.pk) {
                     return res.status(404).json({ error: "User not found" });
                 }
-                const wallet = await getWalletByOwnerId(user.pk);
+                const wallet = await getWalletByOwnerId({ownerFk: user.pk, ownerType: OWNER_TYPE.USER});
                 await redisClient.set(String(fid), JSON.stringify({walletAddress: wallet?.wallet_address}))
                 return res.status(200).json({ status: "already exists", walletAddress: wallet?.wallet_address});
             }
@@ -245,6 +246,10 @@ const startServer = async () => {
 
     app.post('/cache/decrease-balance', async (req, res) => {
         const { walletAddress, agentFid, ownerFid} = req.body;
+        const agentData = fetchAgentDetails(agentFid)
+        if(!agentData?.pk){
+            return res.json({ status: "Target user is not agent",  data: { } });
+        }
         const existingData = await redisClient.get(walletAddress);
         const DEFAULT_AMOUNT = 0.1
         if(!existingData){
@@ -262,6 +267,9 @@ const startServer = async () => {
     app.get('/cache/wallet-balance/:id', async (req, res) => {
         const walletAddress = req.params.id
         const existingData = await redisClient.get(walletAddress);
+        if(!existingData){
+            return res.status(400).json({status:"Please add funds"})
+        }
         let parsedData
         if (existingData) {
             parsedData = JSON.parse(existingData);
@@ -283,17 +291,18 @@ const startServer = async () => {
         return res.status(200).json({ token });
     });
 
-        app.get("/agent-ids", async (req, res) => {
-            const farcasterAccountService = new FarcasterAccountService();
-            const data = await farcasterAccountService.getFarcasterAccountIds();
-            res.json({ data });
-        });
+    app.get("/agent-ids", async (req, res) => {
+        const farcasterAccountService = new FarcasterAccountService();
+        const data = await farcasterAccountService.getFarcasterAccountIds();
+        res.json({ data });
+    });
 
         // Start the server
-        const PORT = process.env.SERVER_PORT || 3003;
-        app.listen(PORT, () => {
-            console.log(`Server is running on http://localhost:${PORT}`);
-        });
+    const PORT = process.env.SERVER_PORT || 3003;
+    app.listen(PORT, () => {
+        console.log(`Server is running on http://localhost:${PORT}`);
+    });
+
     } catch (error) {
         console.error("Error during app initialization:", error);
     }

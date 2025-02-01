@@ -149,7 +149,7 @@ export async function buyToken({ agentFid, ownerFid, amount }) {
     const {ownerWalletAddress} = await getOwnerWalletAddress({fid: ownerFid});
     const buyerPublicKey = new PublicKey(ownerWalletAddress);
     if (!farcasterAccountData?.pk) {
-        throw new Error("Account not found");
+        return "Account not found";
     }
     const tokenService = new TokenService();
     const agentToken = await tokenService.getTokenByFarcasterAccountId(
@@ -195,7 +195,7 @@ export async function sellToken({ agentFid, ownerFid, amount }) {
     const {ownerWalletAddress} = await getOwnerWalletAddress({fid: ownerFid});
     const sellerPublicKey = new PublicKey(ownerWalletAddress);
     if (!farcasterAccountData?.pk) {
-        throw new Error("Account not found");
+        return ("Account not found");
     }
     const tokenService = new TokenService();
     const agentToken = await tokenService.getTokenByFarcasterAccountId(
@@ -241,7 +241,7 @@ export async function burnToken({ agentFid, ownerFid, amount }){
     const {ownerWalletAddress} = await getOwnerWalletAddress({fid: ownerFid});
     const ownerPublicKey = new PublicKey(ownerWalletAddress);
     if (!farcasterAccountData?.pk) {
-        throw new Error("Account not found");
+        return ("Account not found");
     }
     const tokenService = new TokenService();
     const agentToken = await tokenService.getTokenByFarcasterAccountId(

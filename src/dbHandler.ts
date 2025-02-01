@@ -85,12 +85,18 @@ export const getUserByFid = async (fid: number) => {
     return await userService.getUserByFid(fid);
 };
 
-export const getWalletByOwnerId = async (ownerFk: bigint) => {
+export const getWalletByOwnerId = async ({ownerFk, ownerType}) => {
     const walletService = new WalletService();
-    return await walletService.getWalletByOwnerId(ownerFk);
+    return await walletService.fetchWalletByOwnerId({ownerFk, ownerType});
 };
 
 export const updateWalletBalanace = ({walletAddress, amount}) => {
     const walletBalance = new WalletTransactionService();
     walletBalance.updateWalletBalance({walletAddress, amount})
+}
+
+export const fetchAgentDetails = async (agentFid) => {
+    const farcasterAccountService = new FarcasterAccountService();
+    const farcasterAccountData = await farcasterAccountService.findFarcasterAccountByFid(agentFid);
+    return farcasterAccountData
 }
