@@ -60,7 +60,12 @@ const startServer = async () => {
 
     // Set up Express app
     const app = express();
-    app.use(cors());
+    app.use(cors({
+        origin: "*", // Change this to a specific domain if needed
+        methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+        allowedHeaders: ["Content-Type", "Authorization"],
+        credentials: true // If using cookies or authentication headers
+    }));
     app.use(bodyParser.json());
     app.use(bodyParser.urlencoded({ extended: true }));
 
