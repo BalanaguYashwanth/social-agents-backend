@@ -35,6 +35,17 @@ class FarcasterAccountService {
         return farcasterAccount;
     }
 
+    async getFarcasterAccounts() {
+        const data = (await this.farcasterAccountRepository.find({
+            select: {
+                fid: true,
+                username: true,
+            },
+        })) as FarcasterAccount[];
+       return data
+    }
+
+
     async getFarcasterAccountIds() {
         const jsonFidArr = (await this.farcasterAccountRepository.find({
             select: {

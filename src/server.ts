@@ -302,6 +302,12 @@ const startServer = async () => {
         res.json({ data });
     });
 
+    app.get('/agents', async (req, res) => {
+        const farcasterAccountService = new FarcasterAccountService();
+        const data = await farcasterAccountService.getFarcasterAccounts();
+        res.json({ data });
+    })
+
         // Start the server
     const PORT = process.env.SERVER_PORT || 3003;
     app.listen(PORT, () => {
