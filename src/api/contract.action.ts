@@ -17,6 +17,7 @@ import { TokenService } from "../services/tokenServices";
 import { getOwnerWalletAddress, solToLamports } from "../scrapeTwitter/utils";
 import { FarcasterAccountService } from "../services/farcasterAccountService";
 import { createCreateMetadataAccountV3Instruction } from "@metaplex-foundation/mpl-token-metadata";
+import { fetchAgentToken } from "../dbHandler";
 
 const { Program } = anchor;
 
@@ -151,10 +152,7 @@ export async function buyToken({ agentFid, ownerFid, amount }) {
     if (!farcasterAccountData?.pk) {
         return "Account not found";
     }
-    const tokenService = new TokenService();
-    const agentToken = await tokenService.getTokenByFarcasterAccountId(
-        farcasterAccountData?.pk as any
-    );
+    const agentToken = await fetchAgentToken(farcasterAccountData?.pk)
     const { mint, listing, mint_vault, sol_vault } = agentToken;
     const userAta = getAssociatedTokenAddressSync(
         new PublicKey(mint),

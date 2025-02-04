@@ -29,6 +29,7 @@ import {
 import createAndSaveFarcasterAccountAndWallet from "./createFarcaster/createFarcasterAccount";
 import {
     fetchAgentDetails,
+    fetchAgentToken,
     getUserByFid,
     getWalletByOwnerId,
     saveToken,
@@ -40,6 +41,7 @@ import { checkAvailableFid, getRandomFid } from "./api/farcaster.action";
 import { FarcasterAccountService } from "./services/farcasterAccountService";
 import ENV_CONFIG from "./config/env";
 import { createClient } from 'redis';
+import { fetchSplTokens } from "./api/external.action";
 
 const redisClient = createClient({
     username: ENV_CONFIG.REDIS_USERNAME,
@@ -212,6 +214,19 @@ const startServer = async () => {
         await buyToken({ agentFid, ownerFid, amount });
         return res.status(200).json({ message: "Token bought successfully" });
     });
+
+    app.get('/spl-tokens/:id', async (req, res) => {
+        const ownerWalletAddress  = req.params.id
+        const data = await fetchSplTokens(ownerWalletAddress)
+        return res.status(200).json({ data: data?.result?.token_accounts });
+    })
+
+    app.get('/agent-token/:id', async (req, res)=>{
+        const agentFid = req.params.id
+        const accountDetails = await fetchAgentDetails(agentFid);
+        const data = await fetchAgentToken(BigInt(accountDetails?.pk))
+        return res.status(200).json({ mintAddress: data?.mint });
+    })
 
     app.post("/create-token", async (req, res) => {
         const { listing, mint, mint_vault, sol_vault, seed, user_ata } =

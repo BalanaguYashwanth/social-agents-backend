@@ -70,6 +70,14 @@ export const saveToken = async ({
 };
 
 
+export const fetchAgentToken = async (pk: bigint) => {
+    const tokenService = new TokenService();
+    const agentToken = await tokenService.getTokenByFarcasterAccountId(
+        pk as any
+    );
+    return agentToken
+}
+
 export const saveUser = async (user) => {
     try {
         const userService = new UserService();

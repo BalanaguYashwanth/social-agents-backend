@@ -39,10 +39,9 @@ export class TokenService {
         });
     }
 
-    async getTokenByFarcasterAccountId(farcasterAccountFk) {
+    async getTokenByFarcasterAccountId(farcasterAccountFk: number) {
         return await this.tokenRepository.findOne({
-            // pass pk of farcaster account
-            where: { farcaster_account_fk: BigInt(farcasterAccountFk) as any },
+            where: { farcaster_account_fk: { pk: BigInt(farcasterAccountFk) } },
         });
     }
 }
