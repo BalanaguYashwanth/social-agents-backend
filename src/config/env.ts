@@ -6,6 +6,7 @@ const ENV_CONFIG = {
     FILE_Path: process.env.FILE_Path,
     TEMP_DB_API: process.env.TEMP_DB_API,
     // Farcaster
+    FARCASTER_FID: process.env.FARCASTER_FID,
     FARCASTER_NEYNAR_API_KEY: process.env.FARCASTER_NEYNAR_API_KEY,
     FARCASTER_HUB_URL: process.env.FARCASTER_HUB_URL,
     FARCASTER_NEYNAR_SIGNER_UUID: process.env.FARCASTER_NEYNAR_SIGNER_UUID,

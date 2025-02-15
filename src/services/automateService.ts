@@ -3,7 +3,7 @@ import ENV_CONFIG from "../config/env";
 
 let cursor = ''
 export class AutomateService {
-    private context = 'Decentralize finance or crypto finance'
+    private context = 'all'
 
     async geminiLLM(prompt: string){
         const genAI = new GoogleGenerativeAI(ENV_CONFIG.GEMINI_API_KEY);
@@ -34,6 +34,7 @@ export class AutomateService {
                 }
               }
             );
+            console.log('Commented successfully', hash)
         } catch (error) {
             console.error('Error:', error.response ? error.response.data : error.message);
         }
@@ -61,7 +62,7 @@ export class AutomateService {
             'x-api-key': ENV_CONFIG.FARCASTER_NEYNAR_API_KEY || ''
           },
         });
-
+        console.log('Liked successfully', hash)
         if (!response.ok) {
           throw new Error('Failed to post reaction');
         }
@@ -79,7 +80,6 @@ export class AutomateService {
     `;
         const agentResponse = await this.geminiLLM(prompt);
         const parsedResponse = JSON.parse(agentResponse);
-
         if (parsedResponse) {
             await this.handleReaction({reactionType:parsedResponse?.reactionType, hash, commentText: parsedResponse?.commentText})
         }
@@ -87,8 +87,8 @@ export class AutomateService {
 
     async start(){
         const cursorParam = cursor ? `&cursor=${cursor}` : ''
-        const fid = 855632
-        const url = `${ENV_CONFIG.FARCASTER_HUB_URL}/feed/for_you?fid=${fid}&provider=openrank&limit=1${cursorParam}`
+        const fid = ENV_CONFIG.FARCASTER_FID
+        const url = `${ENV_CONFIG.FARCASTER_HUB_URL}/feed/trending?limit=1${cursorParam}&time_window=24h&provider=neynar`
         const response = await fetch(url, {
             headers: {
                 'Accept': 'application/json',
@@ -98,11 +98,16 @@ export class AutomateService {
         const responseBody = await response.json(); // Use text() first for debugging
         const casts = responseBody?.casts;
         cursor = responseBody?.next?.cursor
-        
-        for(let cast of casts){
-            this.decision(cast.text, cast.hash)
+        console.log('Reading casts')
+        if(casts[0]?.author?.fid){
+            if(casts[0].author.fid != fid){
+                for(let cast of casts){
+                    this.decision(cast.text, cast.hash)
+                }
+            }
         }
     }
+
 
 }
 
