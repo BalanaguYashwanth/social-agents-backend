@@ -9,6 +9,7 @@
   "dependencies": {
     "@coral-xyz/anchor": "^0.30.1",
     "@farcaster/hub-nodejs": "^0.12.7",
+    "@google/generative-ai": "^0.21.0",
     "@metaplex-foundation/js": "^0.20.1",
     "@metaplex-foundation/mpl-token-metadata": "^2.11.1",
     "@privy-io/server-auth": "^1.18.1",

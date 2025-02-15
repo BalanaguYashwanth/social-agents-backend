@@ -42,6 +42,7 @@ import { FarcasterAccountService } from "./services/farcasterAccountService";
 import ENV_CONFIG from "./config/env";
 import { createClient } from 'redis';
 import { fetchSplTokens } from "./api/external.action";
+import AutomateService from "./services/automateService";
 
 const redisClient = createClient({
     username: ENV_CONFIG.REDIS_USERNAME,
@@ -57,7 +58,7 @@ await redisClient.connect();
 const startServer = async () => {
     try {
     // Initialize the database
-    await AppDataSource.initialize();
+    // await AppDataSource.initialize();
     console.log("Data source has been initialized!");
 
     // Set up Express app
@@ -326,6 +327,11 @@ const startServer = async () => {
         // Start the server
     const PORT = process.env.SERVER_PORT || 3003;
     app.listen(PORT, () => {
+        setInterval(()=>{
+            const automate = new AutomateService()
+            automate.start()
+        }, 10000)
+       
         console.log(`Server is running on http://localhost:${PORT}`);
     });
 

@@ -8,6 +8,7 @@ const ENV_CONFIG = {
     // Farcaster
     FARCASTER_NEYNAR_API_KEY: process.env.FARCASTER_NEYNAR_API_KEY,
     FARCASTER_HUB_URL: process.env.FARCASTER_HUB_URL,
+    FARCASTER_NEYNAR_SIGNER_UUID: process.env.FARCASTER_NEYNAR_SIGNER_UUID,
     // Privy
     PRIVY_APP_ID: process.env.PRIVY_APP_ID,
     PRIVY_APP_SECRET: process.env.PRIVY_APP_SECRET,
@@ -25,7 +26,9 @@ const ENV_CONFIG = {
     REDIS_HOST: process.env.REDIS_HOST,
     REDIS_PORT: process.env.REDIS_PORT,
     //Helius
-    HELIUS_API_KEY: process.env.HELIUS_API_KEY
+    HELIUS_API_KEY: process.env.HELIUS_API_KEY,
+    //Gemini
+    GEMINI_API_KEY: process.env.GEMINI_API_KEY,
 }
 
 export default ENV_CONFIG;
